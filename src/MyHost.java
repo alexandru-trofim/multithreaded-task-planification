@@ -1,6 +1,8 @@
 /* Implement this class. */
 
+import javax.swing.text.html.HTMLDocument;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -66,13 +68,13 @@ public class MyHost extends Host {
 
                 while (remainingTime > 0) {
                     try {
-                        Thread.sleep(50); // or use TimeUnit.MILLISECONDS.sleep(1);
+                        Thread.sleep(200); // or use TimeUnit.MILLISECONDS.sleep(1);
                     } catch (InterruptedException e) {
                         System.out.println("Interrupted exception");
                     }
                     elapsedTime = System.nanoTime() - startTime;
                     remainingTime -= elapsedTime;
-                    workLeft = remainingTime;
+                    workLeft -= TimeUnit.NANOSECONDS.toMillis(elapsedTime);
                     startTime = System.nanoTime();
 
                     if (preemptCurrentTask) {
@@ -90,7 +92,7 @@ public class MyHost extends Host {
                 }
                 if (remainingTime <= 0) {
                     currentTask.finish();
-                    workLeft = 0;
+//                    workLeft = 0;
                 }
 
             }
@@ -105,9 +107,11 @@ public class MyHost extends Host {
             currentTask.getPriority() < task.getPriority()) {
             preemptCurrentTask = true;
             highPriorityTask = task;
+            workLeft += task.getLeft();
             System.out.println("Task " + task.getId() + " is a high priority task");
         } else {
             queue.put(task);
+            workLeft += task.getLeft();
         }
     }
 
@@ -118,15 +122,18 @@ public class MyHost extends Host {
 
     @Override
     public synchronized long getWorkLeft() {
-        AtomicLong res = new AtomicLong();
-        Task[] tasks;
-        queue.forEach(task -> {
-            if (task != null && task != currentTask) {
-                res.addAndGet(task.getLeft());
-            }
-        });
-        res.addAndGet(workLeft);
-        return TimeUnit.MILLISECONDS.toSeconds(res.get());
+//        AtomicLong res = new AtomicLong();
+//        Task[] tasks;
+////        queue.forEach(task -> {
+////            if (task != null && task != currentTask) {
+////                res.addAndGet(task.getLeft());
+////            }
+////        });
+////        res.addAndGet(workLeft);
+//        System.out.println("Host " + getId() + " has " + res.get() + " work left. ( " + TimeUnit.NANOSECONDS.toSeconds(res.get()) + " ) in seconds");
+//        return TimeUnit.NANOSECONDS.toSeconds(res.get());
+        System.out.println("Host " + getId() + " has " +  workLeft + " work left.");
+        return workLeft;
     }
 
     @Override
